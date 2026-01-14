@@ -1,0 +1,38 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <title>Page Analyzer</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <!-- Bootstrap 5 CDN -->
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+    >
+  </head>
+  <body>
+    <div class="container mt-4">
+    <header class="flex-shrink-0">
+        <nav class="navbar navbar-expand-md navbar-dark bg-dark px-3">
+            <a class="navbar-brand" href="/">Анализатор страниц</a>
+            <div id="navbarNav">
+                <ul class="navbar-nav">
+                    <li class="nav-item"><a class="nav-link " href="/urls">Сайты</a></li>
+                </ul>
+            </div>
+        </nav>
+    </header>
+      {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+          {% for category, message in messages %}
+            <div class="alert alert-{{ category }} mb-3">
+              {{ message }}
+            </div>
+          {% endfor %}
+        {% endif %}
+      {% endwith %}
+      {% block content %}{% endblock %}
+    </div>
+  </body>
+</html>

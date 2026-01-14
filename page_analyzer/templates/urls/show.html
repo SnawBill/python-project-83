@@ -1,0 +1,23 @@
+{% extends "base.html" %}
+
+{% block content %}
+  <h1></h1>
+  <h1 class="mb-4">Сайт: {{ url.name }}</h1>
+
+  <table class="table table-bordered" data-test="url">
+    <tr>
+      <th>ID</th>
+      <td>{{ url.id }}</td>
+    </tr>
+    <tr>
+      <th>Name</th>
+      <td>{{ url.name }}</td>
+    </tr>
+    <tr>
+      <th>Created at</th>
+      <td>{{ url.created_at.strftime('%Y-%m-%d') }}</td>
+    </tr>
+  </table>
+
+  <a href="{{ url_for('urls_index') }}">Back to sites</a>
+{% endblock %}

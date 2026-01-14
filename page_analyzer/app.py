@@ -1,6 +1,22 @@
-from flask import Flask, render_template
 import os
 from dotenv import load_dotenv
+from urllib.parse import urlparse
+from datetime import datetime
+
+from flask import (
+    Flask,
+    flash,
+    get_flashed_messages,
+    make_response,
+    redirect,
+    render_template,
+    request,
+    url_for,
+    abort
+)
+from page_analyzer.db import get_conn
+import validators
+
 
 load_dotenv()
 
@@ -9,4 +25,64 @@ app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', 'dev-secret')
 
 @app.route('/')
 def index():
-    return render_template('index.html')
+    return render_template('index.html', errors={}, url='')
+
+@app.route('/urls', methods=['POST'])
+def create_urls():
+    url = request.form.get('url', '').strip()
+    errors = {}
+
+    if not url:
+        errors['url'] = "Can't be blank"
+    elif len(url) > 255:
+        errors['url'] = 'URL is too long'
+    elif not validators.url(url):
+        errors['url'] = 'Invalid URL'
+
+    if errors:
+        return render_template('index.html', errors=errors, url=url), 422
+    
+    parse = urlparse(url)
+    normalized_url = f'{parse.scheme}://{parse.netloc}'
+
+    with get_conn() as conn:
+        with conn.cursor() as cur:
+            cur.execute('SELECT * FROM urls WHERE name = %s', (normalized_url,))
+            existing = cur.fetchone()
+            if existing:
+                flash('URL is already exist', 'warning')
+                return redirect(url_for('show_url'), id=existing[0])
+            cur.execute(
+                'INSERT INTO urls (name, created_at) VALUES (%s, %s) RETURNING id',
+                (normalized_url, datetime.utcnow()))
+            url_id = cur.fetchone()[0]
+            flash('Страница успешно добавлена', 'succes')
+            return redirect(url_for('show_url', id=url_id))
+        
+
+@app.route('/urls/<id>')
+def show_url(id):
+    with get_conn() as conn:
+        with conn.cursor() as cur:
+            cur.execute('SELECT id, name, created_at FROM urls WHERE id = %s', (id,))
+            url = cur.fetchone()
+            if not url:
+                abort(404)
+            return render_template('urls/show.html', url={
+                'id': url[0],
+                'name': url[1],
+                'created_at': url[2]
+            })
+        
+
+@app.route('/urls')
+def urls_index():
+    with get_conn() as conn:
+        with conn.cursor() as cur:
+            cur.execute('SELECT id, name, created_at FROM urls ORDER BY id DESC')
+            rows = cur.fetchall()
+            urls = [
+                {'id': r[0], 'name': r[1], 'created_at': r[2]}
+                for r in rows
+            ]
+            return render_template('urls/index.html', urls=urls)
