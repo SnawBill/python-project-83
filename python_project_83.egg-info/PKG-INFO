@@ -1,0 +1,10 @@
+Metadata-Version: 2.4
+Name: python-project-83
+Version: 0.1.0
+Summary: Add your description here
+Requires-Python: >=3.10
+Description-Content-Type: text/markdown
+Requires-Dist: flask>=3.1.2
+
+### Hexlet tests and linter status:
+[![Actions Status](https://github.com/SnawBill/python-project-83/actions/workflows/hexlet-check.yml/badge.svg)](https://github.com/SnawBill/python-project-83/actions)

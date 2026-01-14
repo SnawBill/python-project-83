@@ -1,0 +1,8 @@
+README.md
+main.py
+pyproject.toml
+python_project_83.egg-info/PKG-INFO
+python_project_83.egg-info/SOURCES.txt
+python_project_83.egg-info/dependency_links.txt
+python_project_83.egg-info/requires.txt
+python_project_83.egg-info/top_level.txt
