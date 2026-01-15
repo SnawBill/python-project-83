@@ -2,4 +2,15 @@ CREATE TABLE IF NOT EXISTS urls (
     id SERIAL PRIMARY KEY,
     name VARCHAR(50) UNIQUE NOT NULL,
     created_at TIMESTAMP NOT NULL
-)
+);
+
+
+CREATE TABLE IF NOT EXISTS url_checks (
+    id BIGINT PRIMARY KEY GENERATED ALWAYS AS IDENTITY,
+    url_id BIGINT REFERENCES urls (id) ON DELETE CASCADE,
+    status_code INTEGER,
+    h1 TEXT,
+    title TEXT,
+    description TEXT,
+    created_at TIMESTAMP
+);

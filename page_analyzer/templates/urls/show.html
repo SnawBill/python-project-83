@@ -18,6 +18,27 @@
       <td>{{ url.created_at.strftime('%Y-%m-%d') }}</td>
     </tr>
   </table>
+  <form method="post" action="{{ url_for('check_url', id=url.id) }}">
+    <button type="submit" class="btn btn-primary">
+      Запустить проверку
+    </button>
+  </form>
+  <h2 class="mt-4">Проверки</h2>
 
-  <a href="{{ url_for('urls_index') }}">Back to sites</a>
+  <table class="table" data-test="checks">
+    <thead>
+      <tr>
+        <th>ID</th>
+        <th>Дата создания</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for check in checks %}
+      <tr>
+        <td>{{ check.id }}</td>
+        <td>{{ check.created_at.strftime('%Y-%m-%d') }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
 {% endblock %}

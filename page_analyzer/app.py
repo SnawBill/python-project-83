@@ -2,6 +2,7 @@ import os
 from dotenv import load_dotenv
 from urllib.parse import urlparse
 from datetime import datetime
+from psycopg2.extras import DictCursor
 
 from flask import (
     Flask,
@@ -51,7 +52,7 @@ def create_urls():
             existing = cur.fetchone()
             if existing:
                 flash('URL is already exist', 'warning')
-                return redirect(url_for('show_url'), id=existing[0])
+                return redirect(url_for('show_url', id=existing[0]))
             cur.execute(
                 'INSERT INTO urls (name, created_at) VALUES (%s, %s) RETURNING id',
                 (normalized_url, datetime.utcnow()))
@@ -63,26 +64,34 @@ def create_urls():
 @app.route('/urls/<id>')
 def show_url(id):
     with get_conn() as conn:
-        with conn.cursor() as cur:
+        with conn.cursor(cursor_factory=DictCursor) as cur:
             cur.execute('SELECT id, name, created_at FROM urls WHERE id = %s', (id,))
             url = cur.fetchone()
             if not url:
                 abort(404)
+            cur.execute('SELECT * FROM url_checks WHERE url_id = %s ORDER BY id DESC', (id,))
+            checks = cur.fetchall()
             return render_template('urls/show.html', url={
                 'id': url[0],
                 'name': url[1],
                 'created_at': url[2]
-            })
+            }, checks=checks)
         
 
 @app.route('/urls')
 def urls_index():
     with get_conn() as conn:
-        with conn.cursor() as cur:
-            cur.execute('SELECT id, name, created_at FROM urls ORDER BY id DESC')
+        with conn.cursor(cursor_factory=DictCursor) as cur:
+            cur.execute('SELECT urls.id, urls.name, urls.created_at, MAX(url_checks.created_at) AS last_check FROM urls LEFT JOIN url_checks ON urls.id = url_checks.url_id GROUP BY urls.id ORDER BY urls.id DESC')
             rows = cur.fetchall()
-            urls = [
-                {'id': r[0], 'name': r[1], 'created_at': r[2]}
-                for r in rows
-            ]
-            return render_template('urls/index.html', urls=urls)
+            return render_template('urls/index.html', urls=rows)
+        
+
+@app.route('/urls/<id>/checks', methods=['POST'])
+def check_url(id):
+    with get_conn() as conn:
+        with conn.cursor() as cur:
+            cur.execute('INSERT INTO url_checks (url_id, created_at) VALUES (%s, %s)', (id, datetime.now()))
+            conn.commit()
+            flash('Страница успешно проверена', 'success')
+            return redirect(url_for('show_url', id=id))
