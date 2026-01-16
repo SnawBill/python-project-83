@@ -3,6 +3,7 @@ from dotenv import load_dotenv
 from urllib.parse import urlparse
 from datetime import datetime
 from psycopg2.extras import DictCursor
+from bs4 import BeautifulSoup
 
 from flask import (
     Flask,
@@ -102,7 +103,14 @@ def check_url(id):
                 if r.status_code >= 500:
                     flash('Произошла ошибка при проверке', 'danger')
                     return redirect(url_for('urls_show', id=id))
-                cur.execute('INSERT INTO url_checks (url_id, created_at, status_code) VALUES (%s, %s, %s)', (id, datetime.now(), r.status_code))
+                soup = BeautifulSoup(r.text, 'html.parser')
+                h1 = soup.h1.get_text(strip=True) if soup.h1 else None
+                title = soup.title.get_text(strip=True) if soup.title else None
+                description = None
+                meta = soup.find('meta', attrs={'name': 'description'})
+                if meta and meta.get('content'):
+                    description = meta['content'].strip()
+                cur.execute('INSERT INTO url_checks (url_id, created_at, status_code, h1, title, description) VALUES (%s, %s, %s, %s, %s, %s)', (id, datetime.now(), r.status_code, h1, title, description))
                 conn.commit()
                 flash('Страница успешно проверена', 'success')
             except requests.RequestException:
