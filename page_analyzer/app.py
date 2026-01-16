@@ -57,13 +57,14 @@ def create_urls():
                 return redirect(url_for('show_url', id=existing[0]))
             cur.execute(
                 'INSERT INTO urls (name, created_at) VALUES (%s, %s) RETURNING id',
-                (normalized_url, datetime.utcnow()))
+                (normalized_url, datetime.now()))
+            conn.commit()
             url_id = cur.fetchone()[0]
-            flash('Страница успешно добавлена', 'succes')
+            flash('Страница успешно добавлена', 'success')
             return redirect(url_for('show_url', id=url_id))
         
 
-@app.route('/urls/<id>')
+@app.route('/urls/<int:id>')
 def show_url(id):
     with get_conn() as conn:
         with conn.cursor(cursor_factory=DictCursor) as cur:
@@ -73,23 +74,19 @@ def show_url(id):
                 abort(404)
             cur.execute('SELECT * FROM url_checks WHERE url_id = %s ORDER BY id DESC', (id,))
             checks = cur.fetchall()
-            return render_template('urls/show.html', url={
-                'id': url[0],
-                'name': url[1],
-                'created_at': url[2]
-            }, checks=checks)
+            return render_template('urls/show.html', url=url, checks=checks)
         
 
 @app.route('/urls')
 def urls_index():
     with get_conn() as conn:
         with conn.cursor(cursor_factory=DictCursor) as cur:
-            cur.execute('SELECT urls.id, urls.name, urls.created_at, MAX(url_checks.created_at) AS last_check, MAX(url_checks.status_code) AS status_code FROM urls LEFT JOIN url_checks ON urls.id = url_checks.url_id GROUP BY urls.id ORDER BY urls.id DESC')
+            cur.execute('SELECT urls.id, urls.name, urls.created_at, MAX(url_checks.created_at) AS last_check, MAX(url_checks.status_code) AS status_code FROM urls LEFT JOIN url_checks ON urls.id = url_checks.url_id GROUP BY urls.id, urls.name, urls.created_at ORDER BY urls.id DESC')
             rows = cur.fetchall()
             return render_template('urls/index.html', urls=rows)
         
 
-@app.route('/urls/<id>/checks', methods=['POST'])
+@app.route('/urls/<int:id>/checks', methods=['POST'])
 def check_url(id):
     with get_conn() as conn:
         with conn.cursor(cursor_factory=DictCursor) as cur:
@@ -114,5 +111,5 @@ def check_url(id):
                 conn.commit()
                 flash('Страница успешно проверена', 'success')
             except requests.RequestException:
-                flash('Ошибка при проверке', 'danger')
+                flash('Произошла ошибка при проверке', 'danger')
             return redirect(url_for('show_url', id=id))
