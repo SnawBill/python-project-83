@@ -1,32 +1,34 @@
 import os
-from dotenv import load_dotenv
-from urllib.parse import urlparse
 from datetime import datetime
-from psycopg2.extras import DictCursor
-from bs4 import BeautifulSoup
+from urllib.parse import urlparse
 
+import requests
+import validators
+from bs4 import BeautifulSoup
+from dotenv import load_dotenv
 from flask import (
     Flask,
+    abort,
     flash,
     redirect,
     render_template,
     request,
     url_for,
-    abort
 )
-import requests
-from page_analyzer.db import get_conn
-import validators
+from psycopg2.extras import DictCursor
 
+from page_analyzer.db import get_conn
 
 load_dotenv()
 
 app = Flask(__name__)
 app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', 'dev-secret')
 
+
 @app.route('/')
 def index():
     return render_template('index.html', errors={}, url='')
+
 
 @app.route('/urls', methods=['POST'])
 def create_urls():
@@ -54,8 +56,10 @@ def create_urls():
                 flash('URL is already exist', 'warning')
                 return redirect(url_for('show_url', id=existing[0]))
             cur.execute(
-                'INSERT INTO urls (name, created_at) VALUES (%s, %s) RETURNING id',
-                (normalized_url, datetime.utcnow()))
+                '''INSERT INTO urls (name, created_at)
+                VALUES (%s, %s) RETURNING id''',
+                (normalized_url, datetime.utcnow())
+            )
             conn.commit()
             url_id = cur.fetchone()[0]
             flash('Страница успешно добавлена', 'success')
@@ -66,11 +70,15 @@ def create_urls():
 def show_url(id):
     with get_conn() as conn:
         with conn.cursor(cursor_factory=DictCursor) as cur:
-            cur.execute('SELECT id, name, created_at FROM urls WHERE id = %s', (id,))
+            cur.execute('''SELECT id, name, created_at
+                FROM urls WHERE id = %s''', (id,)
+            )
             url = cur.fetchone()
             if not url:
                 abort(404)
-            cur.execute('SELECT * FROM url_checks WHERE url_id = %s ORDER BY id DESC', (id,))
+            cur.execute('''SELECT * FROM url_checks
+                WHERE url_id = %s ORDER BY id DESC''', (id,)
+            )
             checks = cur.fetchall()
             return render_template('urls/show.html', url=url, checks=checks)
         
@@ -79,14 +87,14 @@ def show_url(id):
 def urls_index():
     with get_conn() as conn:
         with conn.cursor(cursor_factory=DictCursor) as cur:
-            cur.execute('SELECT urls.id, ' \
-            'urls.name, ' \
-            'urls.created_at, ' \
-            'MAX(url_checks.created_at) AS last_check, ' \
-            'MAX(url_checks.status_code) AS status_code ' \
-            'FROM urls LEFT JOIN url_checks ON urls.id = url_checks.url_id ' \
-            'GROUP BY urls.id, urls.name, urls.created_at ' \
-            'ORDER BY urls.id DESC'
+            cur.execute('''SELECT urls.id,
+                urls.name,
+                urls.created_at,
+                MAX(url_checks.created_at) AS last_check,
+                MAX(url_checks.status_code) AS status_code
+                FROM urls LEFT JOIN url_checks ON urls.id = url_checks.url_id
+                GROUP BY urls.id, urls.name, urls.created_at
+                ORDER BY urls.id DESC'''
             )
             rows = cur.fetchall()
             return render_template('urls/index.html', urls=rows)
@@ -103,9 +111,7 @@ def check_url(id):
                 return redirect(url_for('urls_index'))
             try:
                 r = requests.get(url['name'], timeout=5)
-                r.raise_for_status()
-            except requests.exceptions.HTTPError as e:
-                if e.response.status_code >= 500:
+                if r.status_code >= 500:
                     flash('Произошла ошибка при проверке', 'danger')
                     return redirect(url_for('show_url', id=id))
                 soup = BeautifulSoup(r.text, 'html.parser')
@@ -115,7 +121,17 @@ def check_url(id):
                 meta = soup.find('meta', attrs={'name': 'description'})
                 if meta and meta.get('content'):
                     description = meta['content'].strip()
-                cur.execute('INSERT INTO url_checks (url_id, created_at, status_code, h1, title, description) VALUES (%s, %s, %s, %s, %s, %s)', (id, datetime.utcnow(), r.status_code, h1, title, description))
+                cur.execute('''INSERT INTO url_checks 
+                    (url_id, created_at, status_code, h1, title, description) 
+                    VALUES (%s, %s, %s, %s, %s, %s)''', (
+                        id,
+                        datetime.utcnow(), 
+                        r.status_code, 
+                        h1, 
+                        title, 
+                        description,
+                    )
+                )
                 conn.commit()
                 flash('Страница успешно проверена', 'success')
             except requests.RequestException:
