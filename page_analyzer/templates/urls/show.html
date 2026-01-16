@@ -41,9 +41,9 @@
         <td>{{ check.id }}</td>
         <td>{{ check.created_at.strftime('%Y-%m-%d') }}</td>
         <td>{{ check.status_code }}</td>
-        <td>{{ check.h1 }}</td>
-        <td>{{ check.title }}</td>
-        <td>{{ check.description }}</td>
+        <td>{% if check.h1 %}{{ check.h1 }}{% else %}{{''}}{% endif %}</td>
+        <td>{% if check.title %}{{ check.title }}{% else %}{{''}}{% endif %}</td>
+        <td>{% if check.description %}{{ check.description }}{% else %}{{''}}{% endif %}</td>
       </tr>
       {% endfor %}
     </tbody>

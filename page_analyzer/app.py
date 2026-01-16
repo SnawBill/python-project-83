@@ -36,10 +36,14 @@ def create_urls():
     errors = {}
 
     if not url:
-        errors['url'] = "Can't be blank"
-    elif len(url) > 255 or not validators.url(url):
-        flash('Некорректный URL', 'warning')
+        errors['url'] = "Пустое поле"
+    elif not validators.url(url):
+        flash('Некорректный URL', 'danger')
         errors['url'] = 'Некорректный URL'
+    elif len(url) > 255:
+        flash('URL превышает 255 символов', 'danger')
+        errors['url'] = 'URL превышает 255 символов'
+    
   
 
     if errors:
@@ -53,7 +57,7 @@ def create_urls():
             cur.execute('SELECT * FROM urls WHERE name = %s', (normalized_url,))
             existing = cur.fetchone()
             if existing:
-                flash('Страница уже существует', 'warning')
+                flash('Страница уже существует', 'primary')
                 return redirect(url_for('show_url', id=existing[0]))
             cur.execute(
                 '''INSERT INTO urls (name, created_at)
