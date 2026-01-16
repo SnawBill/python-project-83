@@ -30,6 +30,7 @@
       <tr>
         <th>ID</th>
         <th>Дата создания</th>
+        <th>Код ответа</th>
       </tr>
     </thead>
     <tbody>
@@ -37,6 +38,7 @@
       <tr>
         <td>{{ check.id }}</td>
         <td>{{ check.created_at.strftime('%Y-%m-%d') }}</td>
+        <td>{{ check.status_code }}</td>
       </tr>
       {% endfor %}
     </tbody>
