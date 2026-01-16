@@ -10,7 +10,7 @@
         <th>Name</th>
         <th>Created at</th>
         <th>last check</th>
-        <th>Statsus Code</th>
+        <th>Status Code</th>
       </tr>
     </thead>
     <tbody>
@@ -27,8 +27,8 @@
             <td>{{ url.last_check.strftime('%Y-%m-%d') }}</td>
             <td>{{ url.status_code }}</td>
           {% else %}
-            <td>None</td>
-            <td>None</td>
+            <td></td>
+            <td></td>
           {% endif %}
         </tr>
       {% endfor %}
