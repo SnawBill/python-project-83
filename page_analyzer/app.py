@@ -60,8 +60,8 @@ def create_urls():
                 VALUES (%s, %s) RETURNING id''',
                 (normalized_url, datetime.utcnow())
             )
-            conn.commit()
             url_id = cur.fetchone()[0]
+            conn.commit()
             flash('Страница успешно добавлена', 'success')
             return redirect(url_for('show_url', id=url_id))
         
@@ -111,29 +111,30 @@ def check_url(id):
                 return redirect(url_for('urls_index'))
             try:
                 r = requests.get(url['name'], timeout=5)
-                if r.status_code >= 500:
-                    flash('Произошла ошибка при проверке', 'danger')
-                    return redirect(url_for('show_url', id=id))
-                soup = BeautifulSoup(r.text, 'html.parser')
-                h1 = soup.h1.get_text(strip=True) if soup.h1 else None
-                title = soup.title.get_text(strip=True) if soup.title else None
-                description = None
-                meta = soup.find('meta', attrs={'name': 'description'})
-                if meta and meta.get('content'):
-                    description = meta['content'].strip()
-                cur.execute('''INSERT INTO url_checks 
-                    (url_id, created_at, status_code, h1, title, description) 
-                    VALUES (%s, %s, %s, %s, %s, %s)''', (
-                        id,
-                        datetime.utcnow(), 
-                        r.status_code, 
-                        h1, 
-                        title, 
-                        description,
-                    )
-                )
-                conn.commit()
-                flash('Страница успешно проверена', 'success')
             except requests.RequestException:
                 flash('Произошла ошибка при проверке', 'danger')
+                return redirect(url_for('show_url', id=id))
+            if r.status_code >= 500:
+                flash('Произошла ошибка при проверке', 'danger')
+                return redirect(url_for('show_url', id=id))
+            soup = BeautifulSoup(r.text, 'html.parser')
+            h1 = soup.h1.get_text(strip=True) if soup.h1 else None
+            title = soup.title.get_text(strip=True) if soup.title else None
+            description = None
+            meta = soup.find('meta', attrs={'name': 'description'})
+            if meta and meta.get('content'):
+                description = meta['content'].strip()
+            cur.execute('''INSERT INTO url_checks 
+                (url_id, created_at, status_code, h1, title, description) 
+                VALUES (%s, %s, %s, %s, %s, %s)''', (
+                    id,
+                    datetime.utcnow(), 
+                    r.status_code, 
+                    h1, 
+                    title, 
+                    description,
+                    )
+            )
+            conn.commit()
+            flash('Страница успешно проверена', 'success')
             return redirect(url_for('show_url', id=id))
