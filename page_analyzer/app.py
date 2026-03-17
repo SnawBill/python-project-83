@@ -123,17 +123,31 @@ def check_url(id):
                 return redirect(url_for('show_url', id=id))
             soup = BeautifulSoup(r.text, 'html.parser')
 
+            def normalize_text(raw):
+                return ' '.join(raw.split())
+
+            def truncate_if_overflow(raw, text, max_len=255):
+                if len(raw) < max_len:
+                    return text
+                if len(text) <= max_len - 3:
+                    return f'{text}...'
+                return f'{text[: max_len - 3]}...'
+
             def extract_text(tag):
                 if not tag:
                     return None
-                return tag.get_text(separator=' ', strip=True)
+                raw = tag.get_text()
+                text = normalize_text(raw)
+                return truncate_if_overflow(raw, text)
 
             h1 = extract_text(soup.h1)
             title = extract_text(soup.title)
             description = None
             meta = soup.find('meta', attrs={'name': 'description'})
             if meta and meta.get('content'):
-                description = meta['content'].strip()
+                raw = meta['content']
+                text = normalize_text(raw)
+                description = truncate_if_overflow(raw, text)
             cur.execute('''INSERT INTO url_checks 
                 (url_id, created_at, status_code, h1, title, description) 
                 VALUES (%s, %s, %s, %s, %s, %s)''', (
