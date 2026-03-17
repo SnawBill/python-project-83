@@ -123,17 +123,17 @@ def check_url(id):
                 return redirect(url_for('show_url', id=id))
             soup = BeautifulSoup(r.text, 'html.parser')
 
+            MAX_LEN = 200
+
             def normalize_text(text):
                 return ' '.join(text.split())
 
-            def truncate_if_overflow(raw, max_len=255):
+            def truncate_if_overflow(raw, max_len=MAX_LEN):
                 if raw is None:
                     return None
                 text = normalize_text(raw)
-                if len(raw) <= max_len:
+                if len(text) <= max_len:
                     return text
-                if len(text) <= max_len - 3:
-                    return f'{text}...'
                 return f'{text[: max_len - 3]}...'
 
             def extract_text(tag):
