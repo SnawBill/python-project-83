@@ -9,8 +9,8 @@
         <th>ID</th>
         <th>Имя</th>
         <th>Дата создания</th>
-        <th>Последняя проверка</th>
         <th>Код ответа</th>
+        <th>Последняя проверка</th>
       </tr>
     </thead>
     <tbody>
@@ -24,8 +24,8 @@
           </td>
           <td>{{ url.created_at.strftime('%Y-%m-%d') }}</td>
           {% if url.last_check %}
-            <td>{{ url.last_check.strftime('%Y-%m-%d') }}</td>
             <td>{{ url.status_code }}</td>
+            <td>{{ url.last_check.strftime('%Y-%m-%d') }}</td>
           {% else %}
             <td></td>
             <td></td>
