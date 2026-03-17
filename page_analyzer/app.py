@@ -104,6 +104,49 @@ def urls_index():
             return render_template('urls/index.html', urls=rows)
         
 
+MAX_LEN = 200
+
+
+def normalize_text(text):
+    return ' '.join(text.split())
+
+
+def truncate_if_overflow(raw, max_len=MAX_LEN):
+    if raw is None:
+        return None
+    text = normalize_text(raw)
+    if len(text) <= max_len:
+        return text
+    return f'{text[: max_len - 3]}...'
+
+
+def extract_text(tag):
+    if not tag:
+        return None
+    return truncate_if_overflow(tag.get_text())
+
+
+def fetch_url(url_name):
+    try:
+        r = requests.get(url_name, timeout=5)
+    except requests.RequestException:
+        return None, 'Произошла ошибка при проверке'
+    if r.status_code >= 500:
+        return None, 'Произошла ошибка при проверке'
+    return r, None
+
+
+def parse_page_content(html):
+    soup = BeautifulSoup(html, 'html.parser')
+    h1 = extract_text(soup.h1)
+    title = extract_text(soup.title)
+    description = None
+    meta = soup.find('meta', attrs={'name': 'description'})
+    if meta and meta.get('content'):
+        description = truncate_if_overflow(meta['content'])
+    return h1, title, description
+
+
 @app.route('/urls/<int:id>/checks', methods=['POST'])
 def check_url(id):
     with get_conn() as conn:
@@ -113,40 +156,13 @@ def check_url(id):
             if not url:
                 flash('URL не найден', 'danger')
                 return redirect(url_for('urls_index'))
-            try:
-                r = requests.get(url['name'], timeout=5)
-            except requests.RequestException:
-                flash('Произошла ошибка при проверке', 'danger')
+
+            r, error = fetch_url(url['name'])
+            if error:
+                flash(error, 'danger')
                 return redirect(url_for('show_url', id=id))
-            if r.status_code >= 500:
-                flash('Произошла ошибка при проверке', 'danger')
-                return redirect(url_for('show_url', id=id))
-            soup = BeautifulSoup(r.text, 'html.parser')
 
-            MAX_LEN = 200
-
-            def normalize_text(text):
-                return ' '.join(text.split())
-
-            def truncate_if_overflow(raw, max_len=MAX_LEN):
-                if raw is None:
-                    return None
-                text = normalize_text(raw)
-                if len(text) <= max_len:
-                    return text
-                return f'{text[: max_len - 3]}...'
-
-            def extract_text(tag):
-                if not tag:
-                    return None
-                return truncate_if_overflow(tag.get_text())
-
-            h1 = extract_text(soup.h1)
-            title = extract_text(soup.title)
-            description = None
-            meta = soup.find('meta', attrs={'name': 'description'})
-            if meta and meta.get('content'):
-                description = truncate_if_overflow(meta['content'])
+            h1, title, description = parse_page_content(r.text)
             cur.execute('''INSERT INTO url_checks 
                 (url_id, created_at, status_code, h1, title, description) 
                 VALUES (%s, %s, %s, %s, %s, %s)''', (
