@@ -1,9 +1,5 @@
 {% extends "base.html" %}
 
-{% macro trunc(value, max_len=255) -%}
-{%- if value and value|length >= max_len -%}{{ value[:max_len - 3] ~ '...' }}{%- else -%}{{ value or '' }}{%- endif -%}
-{%- endmacro %}
-
 {% block content %}
   <h1 class="mb-4">Сайт: {{ url.name }}</h1>
 
@@ -43,10 +39,10 @@
       {% for check in checks %}
       <tr>
         <td>{{ check.id }}</td>
-        <td>{{- check.status_code -}}</td>
-        <td>{{- trunc(check.h1) -}}</td>
-        <td>{{- trunc(check.title) -}}</td>
-        <td>{{- trunc(check.description) -}}</td>
+        <td>{{ check.status_code }}</td>
+        <td>{{ check.h1 or '' }}</td>
+        <td>{{ check.title or '' }}</td>
+        <td>{{ check.description or '' }}</td>
         <td>{{ check.created_at.strftime('%Y-%m-%d') }}</td>
       </tr>
       {% endfor %}
