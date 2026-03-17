@@ -122,6 +122,7 @@ def check_url(id):
                 flash('Произошла ошибка при проверке', 'danger')
                 return redirect(url_for('show_url', id=id))
             soup = BeautifulSoup(r.text, 'html.parser')
+
             def truncate(value, max_len=255):
                 if value is None:
                     return None
