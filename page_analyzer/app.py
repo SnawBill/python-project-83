@@ -131,8 +131,13 @@ def check_url(id):
                     else value[: max_len - 3] + '...'
                 )
 
-            h1 = soup.h1.get_text(strip=True) if soup.h1 else None
-            title = soup.title.get_text(strip=True) if soup.title else None
+            def extract_text(tag):
+                if not tag:
+                    return None
+                return tag.get_text(separator=' ', strip=True)
+
+            h1 = extract_text(soup.h1)
+            title = extract_text(soup.title)
             description = None
             meta = soup.find('meta', attrs={'name': 'description'})
             if meta and meta.get('content'):
