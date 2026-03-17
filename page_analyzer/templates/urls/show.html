@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 
 {% macro trunc(value, max_len=255) -%}
-{%- if value and value|length > max_len -%}{{ value[:max_len - 3] ~ '...' }}{%- else -%}{{ value or '' }}{%- endif -%}
+{%- if value and value|length >= max_len -%}{{ value[:max_len - 3] ~ '...' }}{%- else -%}{{ value or '' }}{%- endif -%}
 {%- endmacro %}
 
 {% block content %}
