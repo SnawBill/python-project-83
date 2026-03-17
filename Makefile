@@ -13,5 +13,4 @@ build:
 	./build.sh
 
 render-start:
-	psql -a -d $$DATABASE_URL -f database.sql
 	uv run gunicorn -w 5 -b 0.0.0.0:$(PORT) page_analyzer:app
