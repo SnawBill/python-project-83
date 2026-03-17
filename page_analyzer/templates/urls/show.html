@@ -39,10 +39,10 @@
       {% for check in checks %}
       <tr>
         <td>{{ check.id }}</td>
-        <td>{{ check.status_code }}</td>
-        <td>{{ check.h1 or '' }}</td>
-        <td>{{ check.title or '' }}</td>
-        <td>{{ check.description or '' }}</td>
+        <td>{{- check.status_code -}}</td>
+        <td>{{- check.h1 or '' -}}</td>
+        <td>{{- check.title or '' -}}</td>
+        <td>{{- check.description or '' -}}</td>
         <td>{{ check.created_at.strftime('%Y-%m-%d') }}</td>
       </tr>
       {% endfor %}
