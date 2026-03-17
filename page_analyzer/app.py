@@ -36,21 +36,21 @@ def create_urls():
     errors = {}
 
     if not url:
-        errors['url'] = "Пустое поле"
+        flash('Некорректный URL', 'danger')
+        errors['url'] = 'Некорректный URL'
     elif not validators.url(url):
         flash('Некорректный URL', 'danger')
         errors['url'] = 'Некорректный URL'
-    elif len(url) > 255:
-        flash('URL превышает 255 символов', 'danger')
-        errors['url'] = 'URL превышает 255 символов'
-    
-  
 
     if errors:
         return render_template('index.html', errors=errors, url=url), 422
     
     parse = urlparse(url)
     normalized_url = f'{parse.scheme}://{parse.netloc}'
+    if len(normalized_url) > 255:
+        flash('URL превышает 255 символов', 'danger')
+        errors['url'] = 'URL превышает 255 символов'
+        return render_template('index.html', errors=errors, url=url), 422
 
     with get_conn() as conn:
         with conn.cursor() as cur:
