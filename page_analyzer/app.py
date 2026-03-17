@@ -126,12 +126,14 @@ def check_url(id):
             def normalize_text(text):
                 return ' '.join(text.split())
 
-            def truncate_if_overflow(text, max_len=255):
-                if text is None:
+            def truncate_if_overflow(raw, max_len=255):
+                if raw is None:
                     return None
-                text = normalize_text(text)
-                if len(text) <= max_len:
+                text = normalize_text(raw)
+                if len(raw) <= max_len:
                     return text
+                if len(text) <= max_len - 3:
+                    return f'{text}...'
                 return f'{text[: max_len - 3]}...'
 
             def extract_text(tag):
