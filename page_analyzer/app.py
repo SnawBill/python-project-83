@@ -123,14 +123,6 @@ def check_url(id):
                 return redirect(url_for('show_url', id=id))
             soup = BeautifulSoup(r.text, 'html.parser')
 
-            def truncate(value, max_len=255):
-                if value is None:
-                    return None
-                return (
-                    value if len(value) <= max_len
-                    else value[: max_len - 3] + '...'
-                )
-
             def extract_text(tag):
                 if not tag:
                     return None
@@ -142,9 +134,6 @@ def check_url(id):
             meta = soup.find('meta', attrs={'name': 'description'})
             if meta and meta.get('content'):
                 description = meta['content'].strip()
-            h1 = truncate(h1)
-            title = truncate(title)
-            description = truncate(description)
             cur.execute('''INSERT INTO url_checks 
                 (url_id, created_at, status_code, h1, title, description) 
                 VALUES (%s, %s, %s, %s, %s, %s)''', (
