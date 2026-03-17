@@ -122,12 +122,23 @@ def check_url(id):
                 flash('Произошла ошибка при проверке', 'danger')
                 return redirect(url_for('show_url', id=id))
             soup = BeautifulSoup(r.text, 'html.parser')
+            def truncate(value, max_len=255):
+                if value is None:
+                    return None
+                return (
+                    value if len(value) <= max_len
+                    else value[: max_len - 3] + '...'
+                )
+
             h1 = soup.h1.get_text(strip=True) if soup.h1 else None
             title = soup.title.get_text(strip=True) if soup.title else None
             description = None
             meta = soup.find('meta', attrs={'name': 'description'})
             if meta and meta.get('content'):
                 description = meta['content'].strip()
+            h1 = truncate(h1)
+            title = truncate(title)
+            description = truncate(description)
             cur.execute('''INSERT INTO url_checks 
                 (url_id, created_at, status_code, h1, title, description) 
                 VALUES (%s, %s, %s, %s, %s, %s)''', (
